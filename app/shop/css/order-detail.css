@@ -1,0 +1,154 @@
+/* 订单详情 */
+.order-detail-main {
+  padding: 1rem 1.5rem;
+  padding-bottom: calc(80px + var(--safe-bottom));
+}
+
+/* 状态时间线 */
+.status-timeline {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.status-timeline h2 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  opacity: 0.5;
+  position: relative;
+  padding-left: 0;
+}
+
+.timeline-item.done,
+.timeline-item.current {
+  opacity: 1;
+}
+
+.timeline-item.current .timeline-dot {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
+}
+
+.timeline-item.done .timeline-dot {
+  background: var(--primary);
+}
+
+.timeline-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--border);
+  margin-top: 0.35rem;
+}
+
+.timeline {
+  border-left: 2px solid var(--border);
+  margin-left: 5px;
+  padding-left: 1rem;
+}
+
+
+.timeline-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.timeline-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* 详情卡片 */
+.detail-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.detail-card h3 {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.logistics-company {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.btn-link {
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  font-size: 0.95rem;
+}
+
+.order-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.total-amount {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.detail-card p {
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+/* 底部支付栏 */
+.pay-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  padding: 1rem 1.5rem;
+  padding-bottom: calc(1rem + var(--safe-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+}
+
+.pay-amount {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.btn-pay {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}

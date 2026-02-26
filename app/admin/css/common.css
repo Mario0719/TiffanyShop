@@ -1,0 +1,26 @@
+/* 后台管理 - 公共样式 */
+:root {
+  --admin-primary: #1E40AF;
+  --admin-primary-dark: #1E3A8A;
+  --admin-bg: #F1F5F9;
+  --admin-card: #FFFFFF;
+  --admin-text: #1E293B;
+  --admin-text-muted: #64748B;
+  --admin-border: #E2E8F0;
+  --admin-radius: 8px;
+  --admin-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
