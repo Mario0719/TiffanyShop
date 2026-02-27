@@ -31,7 +31,7 @@ export default function LoginPage() {
     }
 
     const redirect = searchParams.get("redirect")
-    router.push(redirect || "/")
+    router.push(redirect || "/shop")
   }
 
   return (

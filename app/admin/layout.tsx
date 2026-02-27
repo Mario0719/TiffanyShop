@@ -15,7 +15,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const { data: userData } = await supabase.auth.getUser()
 
       if (!userData.user) {
-        router.replace("/login")
+        router.replace("/shop/login?redirect=/admin")
         return
       }
 

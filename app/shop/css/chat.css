@@ -6,6 +6,11 @@
   background: var(--bg);
 }
 
+.chat-page.center {
+  justify-content: center;
+  align-items: center;
+}
+
 .chat-header {
   flex-shrink: 0;
   background: var(--card-bg);
@@ -36,6 +41,45 @@
   color: #22C55E;
 }
 
+/* 商品展示 */
+
+.chat-order-preview {
+  background: var(--card-bg);
+  padding: 12px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.order-title {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+}
+
+.order-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.order-item img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.order-info .title {
+  font-size: 14px;
+}
+
+.order-info .price {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* 消息 */
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -61,6 +105,52 @@
   color: var(--text-muted);
 }
 
+.message.order-prompt {
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.message.order-prompt p {
+  margin: 0;
+}
+
+.btn-go-pay {
+  padding: 0.5rem 1.25rem;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.btn-go-pay:hover {
+  background: var(--primary-dark);
+}
+
+.btn-send-products {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+  background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: 1px dashed var(--primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.btn-send-products:hover:not(:disabled) {
+  background: linear-gradient(135deg, #B2DFDB 0%, #80CBC4 100%);
+}
+
+.btn-send-products:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .message.agent {
   justify-content: flex-start;
 }
@@ -82,14 +172,12 @@
   color: white;
 }
 
-.bubble p {
-  margin-bottom: 0.25rem;
-}
-
 .bubble .time {
   font-size: 0.7rem;
   opacity: 0.7;
 }
+
+/* 输入区 */
 
 .chat-input-area {
   flex-shrink: 0;
@@ -129,8 +217,4 @@
 .quick-actions {
   font-size: 0.8rem;
   color: var(--text-muted);
-}
-
-.quick-actions a {
-  margin: 0 0.25rem;
 }
