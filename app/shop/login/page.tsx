@@ -10,12 +10,15 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  const [mode, setMode] = useState<"login" | "register">("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState("")
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setMessage("")
     setLoading(true)
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -26,13 +29,55 @@ export default function LoginPage() {
     setLoading(false)
 
     if (error) {
-      alert(error.message)
+      setMessage(error.message)
       return
     }
 
     const redirect = searchParams.get("redirect")
     router.push(redirect || "/shop")
   }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setMessage("")
+
+    if (!email || !password) {
+      setMessage("请填写邮箱和密码")
+      return
+    }
+
+    if (password.length < 6) {
+      setMessage("密码至少需要 6 位")
+      return
+    }
+
+    setLoading(true)
+
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/shop/login?from=email_confirm`
+        : undefined
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
+    })
+
+    setLoading(false)
+
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+
+    setMessage("注册成功，请前往邮箱点击链接完成验证，然后再登录。")
+    setMode("login")
+  }
+
+  const onSubmit = mode === "login" ? handleLogin : handleRegister
 
   return (
     <div className="login-page">
@@ -42,10 +87,12 @@ export default function LoginPage() {
       </div>
 
       <div className="login-card">
-        <h1>欢迎回来</h1>
-        <p className="subtitle">登录您的账户</p>
+        <h1>{mode === "login" ? "欢迎回来" : "创建新账户"}</h1>
+        <p className="subtitle">
+          {mode === "login" ? "登录您的账户" : "注册后请到邮箱完成验证"}
+        </p>
 
-        <form className="login-form" onSubmit={handleLogin}>
+        <form className="login-form" onSubmit={onSubmit}>
           <div className="form-group">
             <label>邮箱</label>
             <input
@@ -68,15 +115,45 @@ export default function LoginPage() {
             />
           </div>
 
+          {message && <p className="form-message">{message}</p>}
+
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "登录中..." : "登录"}
+            {loading
+              ? mode === "login"
+                ? "登录中..."
+                : "注册中..."
+              : mode === "login"
+                ? "登录"
+                : "注册"}
           </button>
         </form>
 
         <div className="login-footer">
           <a href="#">忘记密码？</a>
           <span className="divider">|</span>
-          <a href="/register">注册新账户</a>
+          {mode === "login" ? (
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => {
+                setMessage("")
+                setMode("register")
+              }}
+            >
+              注册新账户
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => {
+                setMessage("")
+                setMode("login")
+              }}
+            >
+              已有账户？去登录
+            </button>
+          )}
         </div>
       </div>
 

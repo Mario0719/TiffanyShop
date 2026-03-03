@@ -388,11 +388,23 @@
 }
 
 /* 订单管理 */
+.order-filters {
+  margin-bottom: 1rem;
+}
+
 .order-filters select {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius);
   font-size: 0.9rem;
+}
+
+.order-status-select {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  min-width: 90px;
 }
 
 .order-table-wrap {
@@ -423,6 +435,11 @@
 .badge.status-pending-confirm { background: #FEF3C7; color: #92400E; }
 .badge.status-pending-pay { background: #DBEAFE; color: #1E40AF; }
 .badge.status-paid { background: #D1FAE5; color: #065F46; }
+.badge.status-processing { background: #E0E7FF; color: #3730A3; }
+.badge.status-shipped { background: #CFFAFE; color: #0E7490; }
+.badge.status-delivered { background: #DCFCE7; color: #166534; }
+.badge.status-cancelled { background: #FEE2E2; color: #991B1B; }
+.badge.status-refunded { background: #F3E8FF; color: #6B21A8; }
 .badge.status-procuring { background: #E0E7FF; color: #3730A3; }
 .badge.status-shipped { background: #CFFAFE; color: #0E7490; }
 .badge.status-completed { background: #DCFCE7; color: #166534; }

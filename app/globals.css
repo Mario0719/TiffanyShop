@@ -89,9 +89,25 @@ body {
   background: #d1fae5;
   color: #065f46;
 }
+.order-card-status.status-processing {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.order-card-status.status-shipped {
+  background: #cffafe;
+  color: #0e7490;
+}
+.order-card-status.status-delivered {
+  background: #dcfce7;
+  color: #166534;
+}
 .order-card-status.status-cancelled {
   background: #fee2e2;
   color: #991b1b;
+}
+.order-card-status.status-refunded {
+  background: #f3e8ff;
+  color: #6b21a8;
 }
 .order-card-actions {
   margin-top: 0.5rem;

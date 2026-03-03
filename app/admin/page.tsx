@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { OrderCard } from "@/components/OrderCard"
 import { useRouter } from "next/navigation"
@@ -57,6 +57,16 @@ type ProductFormData = {
   status: "active" | "draft"
 }
 
+type AdminOrder = {
+  id: string
+  conversation_id: string
+  customer_id: string
+  price: number
+  status: string
+  created_at: string
+  products: { title: string; cover_image: string | null } | null
+}
+
 const defaultForm: ProductFormData = {
   title: "",
   description: "",
@@ -87,8 +97,12 @@ export default function AdminPage() {
   const [chatItems, setChatItems] = useState<ConvItem[]>([])
   const [chatInput, setChatInput] = useState("")
   const [creatingOrder, setCreatingOrder] = useState(false)
-  const [orderRefreshVersions, setOrderRefreshVersions] = useState<Record<string, number>>({})
   const chatBottomRef = useRef<HTMLDivElement>(null)
+
+  // 订单管理
+  const [orders, setOrders] = useState<AdminOrder[]>([])
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all")
+  const [ordersLoading, setOrdersLoading] = useState(false)
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type })
@@ -98,6 +112,28 @@ export default function AdminPage() {
   useEffect(() => {
     loadProducts()
   }, [])
+
+  const loadOrders = useCallback(async () => {
+    setOrdersLoading(true)
+    let q = supabase
+      .from("orders")
+      .select("id, conversation_id, customer_id, price, status, created_at, products(title, cover_image)")
+      .order("created_at", { ascending: false })
+    if (orderStatusFilter !== "all") {
+      q = q.eq("status", orderStatusFilter)
+    }
+    const { data } = await q
+    const list = (data ?? []).map((o: any) => ({
+      ...o,
+      products: Array.isArray(o.products) ? o.products[0] : o.products,
+    }))
+    setOrders(list)
+    setOrdersLoading(false)
+  }, [orderStatusFilter])
+
+  useEffect(() => {
+    if (activeTab === "orders") loadOrders()
+  }, [activeTab, loadOrders])
 
   const loadProducts = async () => {
     const { data, error } = await supabase
@@ -352,46 +388,40 @@ export default function AdminPage() {
     )
   }
 
-  // 客服聊天：创建订单
+  // 客服聊天：创建订单（通过 RPC 绕过 RLS，确保能成功插入）
   const handleCreateOrder = async () => {
     if (!selectedConv || !adminUser || chatItems.length === 0) return
     setCreatingOrder(true)
-    const ordersToInsert = chatItems.map((item) => ({
-      conversation_id: selectedConv.id,
-      customer_id: selectedConv.customer_id,
-      admin_id: adminUser.id,
+    const itemsPayload = chatItems.map((item) => ({
       product_id: item.product_id,
-      price: item.product_price * item.quantity,
-      status: "pending",
+      product_price: item.product_price,
+      quantity: item.quantity,
     }))
-    const { data: newOrders, error } = await supabase
-      .from("orders")
-      .insert(ordersToInsert)
-      .select("id")
-    if (!error && newOrders?.length) {
-      const messagesToInsert = newOrders.map((order) => ({
-        conversation_id: selectedConv.id,
-        sender_id: adminUser.id,
-        content: "🧾 客服为您创建了订单",
-        order_id: order.id,
-      }))
-      await supabase.from("messages").insert(messagesToInsert)
-      showToast(`已创建 ${newOrders.length} 个订单`)
+    const { data, error } = await supabase.rpc("create_orders_from_items", {
+      p_conversation_id: selectedConv.id,
+      p_admin_id: adminUser.id,
+      p_items: itemsPayload,
+    })
+    if (!error && data?.order_ids?.length) {
+      showToast(`已创建 ${data.order_ids.length} 个订单`)
+      // 重新加载消息以显示新插入的订单卡片
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", selectedConv.id)
+        .order("created_at", { ascending: true })
+      setChatMessages(msgs ?? [])
     } else {
       showToast(error?.message || "创建订单失败", "error")
     }
     setCreatingOrder(false)
   }
 
-  // 客服聊天：标记订单已支付
+  // 客服聊天：标记订单已支付（客户也可自行点击「去支付」）
   const handleMarkOrderPaid = async (orderId: string) => {
     const { error } = await supabase.from("orders").update({ status: "paid" }).eq("id", orderId)
-    if (!error) {
-      showToast("已标记为已支付")
-      setOrderRefreshVersions((v) => ({ ...v, [orderId]: (v[orderId] ?? 0) + 1 }))
-    } else {
-      showToast(error.message, "error")
-    }
+    if (!error) showToast("已标记为已支付")
+    else showToast(error.message, "error")
   }
 
   // 客服聊天：关闭/重新打开会话
@@ -593,10 +623,99 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* 订单管理 panel（占位） */}
-        <section className={`panel ${activeTab === "orders" ? "active" : ""}`}>
-          <h2>订单管理</h2>
-          <p className="admin-placeholder">功能开发中...</p>
+        {/* 订单管理 panel */}
+        <section
+          id="panel-orders"
+          className={`panel ${activeTab === "orders" ? "active" : ""}`}
+        >
+          <div className="panel-header">
+            <h2>订单管理</h2>
+          </div>
+          <div className="order-filters">
+            <select
+              value={orderStatusFilter}
+              onChange={(e) => setOrderStatusFilter(e.target.value)}
+            >
+              <option value="all">全部状态</option>
+              <option value="pending">待支付</option>
+              <option value="paid">已支付</option>
+              <option value="processing">采购中</option>
+              <option value="shipped">已发货</option>
+              <option value="delivered">已签收</option>
+              <option value="cancelled">已取消</option>
+              <option value="refunded">已退款</option>
+            </select>
+          </div>
+          <div className="order-table-wrap">
+            <table className="order-table">
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>商品</th>
+                  <th>金额</th>
+                  <th>状态</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordersLoading ? (
+                  <tr>
+                    <td colSpan={6} className="empty-cell">加载中...</td>
+                  </tr>
+                ) : orders.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="empty-cell">暂无订单</td>
+                  </tr>
+                ) : (
+                  orders.map((o) => (
+                    <tr key={o.id}>
+                      <td>
+                        <span className="order-id">{o.id.slice(0, 8)}...</span>
+                      </td>
+                      <td>{o.products?.title ?? "—"}</td>
+                      <td>¥{o.price}</td>
+                      <td>
+                        <span className={`badge status-${o.status}`}>
+                          {{
+                            pending: "待支付",
+                            paid: "已支付",
+                            processing: "采购中",
+                            shipped: "已发货",
+                            delivered: "已签收",
+                            cancelled: "已取消",
+                            refunded: "已退款",
+                          }[o.status] ?? o.status}
+                        </span>
+                      </td>
+                      <td>{new Date(o.created_at).toLocaleString("zh-CN")}</td>
+                      <td>
+                        <select
+                          className="order-status-select"
+                          value={o.status}
+                          onChange={async (e) => {
+                            const s = e.target.value
+                            if (s === o.status) return
+                            await supabase.from("orders").update({ status: s }).eq("id", o.id)
+                            showToast(`已设为${{ pending: "待支付", paid: "已支付", processing: "采购中", shipped: "已发货", delivered: "已签收", cancelled: "已取消", refunded: "已退款" }[s]}`)
+                            loadOrders()
+                          }}
+                        >
+                          <option value="pending">待支付</option>
+                          <option value="paid">已支付</option>
+                          <option value="processing">采购中</option>
+                          <option value="shipped">已发货</option>
+                          <option value="delivered">已签收</option>
+                          <option value="cancelled">已取消</option>
+                          <option value="refunded">已退款</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         {/* 客服聊天 panel */}
@@ -701,7 +820,6 @@ export default function AdminPage() {
                     >
                       {msg.order_id ? (
                         <OrderCard
-                          key={`${msg.order_id}-${orderRefreshVersions[msg.order_id] ?? 0}`}
                           orderId={msg.order_id}
                           isAdmin
                           onMarkPaid={() => handleMarkOrderPaid(msg.order_id!)}

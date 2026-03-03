@@ -21,6 +21,14 @@ export function OrderCard({
   onMarkPaid?: () => void
 }) {
   const [order, setOrder] = useState<Order | null>(null)
+  const [paying, setPaying] = useState(false)
+
+  const handlePay = async () => {
+    setPaying(true)
+    const { error } = await supabase.from("orders").update({ status: "paid" }).eq("id", orderId)
+    setPaying(false)
+    if (!error) fetchOrder()
+  }
 
   const fetchOrder = useCallback(async () => {
     const { data } = await supabase
@@ -41,7 +49,7 @@ export function OrderCard({
     fetchOrder()
   }, [fetchOrder])
 
-  // 订阅 Realtime + 轮询兜底（确保 admin 标记已支付后两端都能即时看到）
+  // Realtime 订阅（若已启用 orders 表）
   useEffect(() => {
     const channel = supabase
       .channel(`order-${orderId}`)
@@ -56,26 +64,28 @@ export function OrderCard({
         fetchOrder
       )
       .subscribe()
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => supabase.removeChannel(channel)
   }, [orderId, fetchOrder])
 
-  // 待支付时轮询，admin 标记已支付后客户端无需刷新即可看到
+  // 待支付时轮询兜底（Realtime 未启用时 admin 也能看到客户支付）
   useEffect(() => {
     if (!order || order.status !== "pending") return
-    const t = setInterval(fetchOrder, 4000)
+    const t = setInterval(fetchOrder, 3000)
     return () => clearInterval(t)
   }, [order?.status, fetchOrder])
 
   if (!order) return <div className="order-card loading">加载订单...</div>
 
-  const statusText =
-    order.status === "pending"
-      ? "待支付"
-      : order.status === "paid"
-        ? "已支付"
-        : "已取消"
+  const statusLabels: Record<string, string> = {
+    pending: "待支付",
+    paid: "已支付",
+    processing: "采购中",
+    shipped: "已发货",
+    delivered: "已签收",
+    cancelled: "已取消",
+    refunded: "已退款",
+  }
+  const statusText = statusLabels[order.status] ?? order.status
 
   return (
     <div className="order-card">
@@ -96,8 +106,13 @@ export function OrderCard({
               标记已支付
             </button>
           ) : (
-            <button type="button" className="order-card-btn btn-pay">
-              去支付
+            <button
+              type="button"
+              className="order-card-btn btn-pay"
+              onClick={handlePay}
+              disabled={paying}
+            >
+              {paying ? "支付中..." : "去支付"}
             </button>
           )}
         </div>
