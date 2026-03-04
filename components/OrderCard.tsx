@@ -64,7 +64,10 @@ export function OrderCard({
         fetchOrder
       )
       .subscribe()
-    return () => supabase.removeChannel(channel)
+    return () => {
+      // 忽略 Promise，只做清理
+      supabase.removeChannel(channel)
+    }
   }, [orderId, fetchOrder])
 
   // 待支付时轮询兜底（Realtime 未启用时 admin 也能看到客户支付）
